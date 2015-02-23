@@ -1,0 +1,19 @@
+Package: epiwidgets
+Title: epiwidgets
+Version: 0.1
+Date: 2015-02-13
+Author: Simon Frost <sdwfrost@gmail.com>
+Maintainer: Simon Frost <sdwfrost@gmail.com>
+Description: A collection of miscellaneous D3 and three.js widgets, for particular use in epidemiology
+Depends:
+    R (>= 3.1.1)
+Imports:
+    htmlwidgets,
+    base64
+Suggests:
+    shiny,
+    knitr,
+    ape
+License: MIT + file LICENSE
+LazyData: true
+VignetteBuilder: knitr
