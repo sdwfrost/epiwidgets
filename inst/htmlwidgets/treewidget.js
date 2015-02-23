@@ -7,10 +7,10 @@ HTMLWidgets.widget({
   initialize: function(el, width, height) {
     
     /* Set up toolbar */
-    this.toolbar_setup(el);
+    //this.toolbar_setup(el);
     
     /* Add selection widget */
-    this.selection_menu_setup(el);
+    //this.selection_menu_setup(el);
     
     /* Some global variables */
     selection_set = ['Foreground'];
@@ -18,7 +18,7 @@ HTMLWidgets.widget({
     current_selection_id = 0;
     max_selections       = 10;
     color_scheme = d3.scale.category10();
-    selection_menu_element_action = "phylotree_menu_element_action";
+    selectiofn_menu_element_action = "phylotree_menu_element_action";
     
     /* Add SVG tree container */
     var svg=d3.select(el).append("svg")
@@ -26,11 +26,19 @@ HTMLWidgets.widget({
      .attr("height",height);
     
     /* Make tree global */ 
-    tree=d3.layout.phylotree(el).size ([height, width]).separation (function (a,b) {return 0;});
+    tree=d3.layout.phylotree(el)
+      .size ([height, width])
+      .separation (function (a,b) {return 0;})
+      .count_handler (function (count) {
+              $("#selected_branch_counter").text (function (d) {return count[current_selection_name];});
+              $("#selected_filtered_counter").text (count.tag);
+          }
+      );      
     
     this.default_tree_settings(tree);
     
     /* Add event listeners */
+    /*
     $("#selection_new").get(0).addEventListener(selection_menu_element_action,this.selection_handler_new,false);
     $("#selection_rename").get(0).addEventListener(selection_menu_element_action,this.selection_handler_rename,false);
     $("#selection_delete").get(0).addEventListener(selection_menu_element_action,this.selection_handler_delete,false);
@@ -39,7 +47,7 @@ HTMLWidgets.widget({
     $("#save_selection_name").get(0).addEventListener(selection_menu_element_action,this.selection_handler_save_selection_name,false);
     $("#selection_name_dropdown").get(0).addEventListener(selection_menu_element_action,this.selection_handler_name_dropdown,false);
     this.update_selection_names();
-
+    */
     return {"svg": svg, "tree": tree};
   },
 
@@ -291,227 +299,6 @@ $("#selection_new > a").on ("click", function (e) {
       svg.style.width = "100%";
       svg.style.height = "100%";
      }
-  },
-  
-  toolbar_setup: function(el){
-    var toolbar=d3.select(el).append("div")
-      .attr("class","btn-toolbar");
-    
-    var btngroup=toolbar.append("div")
-      .attr("class","btn-group");
-      
-    var expandbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","expand_spacing")
-      .attr("text","Expand spacing")
-      .append("i")
-      .attr("class","fa fa-expand");
-      
-    var compressbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","compress_spacing")
-      .attr("text","Compress spacing")
-      .append("i")
-      .attr("class","fa fa-compress");
-      
-     var sortascbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","sort_ascending")
-      .attr("text","Sort deepest clades to the bottom")
-      .append("i")
-      .attr("class","fa fa-sort-amount-asc");
-      
-    var sortdescbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","sort_descending")
-      .attr("text","Sort deepest clades to the top")
-      .append("i")
-      .attr("class","fa fa-sort-amount-desc");
-      
-    var sortorigbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","sort_original")
-      .attr("text","Restore original order")
-      .append("i")
-      .attr("class","fa fa-sort");
-
-    var savebutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","save_tree")
-      .attr("text","Save tree")
-      .append("i")
-      .attr("class","fa fa-floppy-o");
-
-    var exitbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","exit_widget")
-      .attr("text","Exit")
-      .append("i")
-      .attr("class","fa fa-close");
- 
-  },
-  
-  selection_menu_setup: function(el){
-    var inputgroupcontainer=d3.select(el).append("div")
-      .attr("class","input-group");
-    
-    var inputgroup=inputgroupcontainer.append("span")
-      .attr("class","input-group-btn");
-      
-    var inputmenubutton=inputgroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default dropdown-toggle")
-      .attr("data-toggle","dropdown")
-      .text("Tag ")
-      .append("span")
-      .attr("class","caret");
-    
-    var inputmenu=inputgroup.append("ul")
-      .attr("class","dropdown-menu")
-      .attr("id","selection_name_dropdown");
-
-    var selectionnewbutton=inputmenu.append("li")
-      .attr("id","selection_new")
-      .append("a")
-      .attr("href","#")
-      .text("New selection set");
-      
-    var selectiondelbutton=inputmenu.append("li")
-      .attr("id","selection_delete")
-      //.attr("class","disabled")
-      .append("a")
-      .attr("href","#")
-      .text("Delete selection set");
-    
-    var selectionrenamebutton=inputmenu.append("li")
-      .attr("id","selection_rename")
-      .append("a")
-      .attr("href","#")
-      .text("Rename selection set");
-      
-    var selectionrenamebutton=inputmenu.append("li")
-      .attr("class","divider");
-    
-    var selectionnamebox=inputgroupcontainer.append("input")
-      .attr("type","text")
-      .attr("class","form-control")
-      .attr("value","Foreground")
-      .attr("id","selection_name_box")
-      .attr("disabled","true");
-      
-    var saveselectionspan=inputgroupcontainer.append("span")
-      .attr("class","input-group-btn")
-      .attr("id","save_selection_name")
-      .attr("style","display: none");
-      
-    saveselectionspan.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default")
-      .attr("id","cancel_selection_button")
-      .text("Cancel")
-      
-    saveselectionspan.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default")
-      .attr("id","save_selection_button")
-      .text("Save")
-    
-    var selectionmenu=inputgroupcontainer.append("span")
-      .attr("class","input-group-brn");
-      
-    selectionmenu.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default dropdown-toggle")
-      .attr("data-toggle","dropdown")
-      .text("Selection ")
-      .append("span")
-      .attr("class","caret");
-      
-    var selectionmenuitems=selectionmenu.append("ul")
-      .attr("class","dropdown-menu");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","filter_add")
-      .text("Add filtered nodes to selection");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","filter_remove")
-      .text("Remove filtered nodes to selection");
-
-    selectionmenuitems.append("li")
-      .attr("class","divider");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","select_all_internal")
-      .text("Select all internal nodes");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","select_all_leaves")
-      .text("Select all leaf nodes");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","clear_internal")
-      .text("Clear all internal nodes");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","clear_leaves")
-      .text("Clear all leaves");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","select_none")
-      .text("Clear selection");
-
-    selectionmenuitems.append("li")
-      .attr("class","divider");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","mp_label")
-      .text("Label internal nodes using maximum parsimony");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","and_label")
-      .text("Label internal nodes using conjunction (AND)");
-   
-     selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","or_label")
-      .text("Label internal nodes using disjunction (OR)");
-      
-     /* Filtering */
-    
-    var branchfilter=inputgroupcontainer.append("div")
-      .attr("class","form-group navbar-form navbar-right")
-      .append("input")
-      .attr("type","text")
-      .attr("id","branch_filter")
-      .attr("class","form-control")
-      .attr("placeholder","Filter branches on");
   },
   
   node_colorizer: function(element, data) {
