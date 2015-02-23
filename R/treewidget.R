@@ -142,6 +142,12 @@ treewidget_html <- function(id, style, class, ...) {
              <button type="button" class="btn btn-default btn-sm" id="sort_original" title="Restore original order">
                 <i class="fa fa-sort"></i>
             </button>
+            <button text="Save tree" id="save_tree" class="btn btn-default btn-sm" type="button">
+              <i class="fa fa-floppy-o"></i>
+            </button>
+            <button text="Exit" id="exit_widget" class="btn btn-default btn-sm" type="button">
+              <i class="fa fa-close"></i>
+            </button>
           </div>
            <label class="pull-right">Selected <span class="badge" id="selected_branch_counter">0</span> and filtered <span class="badge" id="selected_filtered_counter">0</span> branches</label>
        </div>
