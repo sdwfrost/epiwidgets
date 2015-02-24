@@ -40,12 +40,13 @@ function selection_handler_name_box (e) {
                     .style ("color",  color_scheme(current_selection_id));
             break;
         case 'new':
-            name_box.attr ("disabled", null)
-                    .property ("value", "new_selection_name")
-                    .style ("color",  color_scheme(selection_set.length));
+            name_box
+              .property ("value", "new_selection_name")
+              .style ("color",  color_scheme(selection_set.length));
+            name_box[0][0].disabled = null;
             break;
         case 'rename':
-           name_box.attr ("disabled", null);
+           name_box[0][0].disabled = null;
            break;
     }
 }
