@@ -359,9 +359,10 @@ HTMLWidgets.widget({
                 });
   
   
-      // Need to tidy above
-
-    });
+     send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                 {'detail' : ['new', this]}));
+    e.preventDefault    ();
+});
     
     /* Dynamic resize */
     this.makeResponsive(el);
