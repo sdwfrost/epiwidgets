@@ -1,3 +1,105 @@
+function send_click_event_to_menu_objects(e) {
+  $("#selection_new, #selection_delete, #selection_rename, #save_selection_name, #selection_name_box, #selection_name_dropdown").get().forEach (
+      function (d) {
+          d.dispatchEvent (e);
+      }
+  );
+}
+
+function update_selection_names (id, skip_rebuild) {
+    skip_rebuild = skip_rebuild || false;
+    id = id || 0;
+    current_selection_name = selection_set[id];
+    current_selection_id = id;
+    if (!skip_rebuild) {
+        d3.selectAll (".selection_set").remove();
+        d3.select ("#selection_name_dropdown")
+          .selectAll (".selection_set")
+          .data (selection_set)
+          .enter()
+          .append ("li")
+          .attr ("class", "selection_set")
+          .append ("a")
+          .attr ("href", "#")
+          .text (function (d) { return d;})
+          .style ("color", function (d,i) {return color_scheme(i);})
+          .on ("click", function (d,i) {update_selection_names (i,true);});
+    }
+    d3.select ("#selection_name_box")
+      .style ("color",  color_scheme(id))
+      .property ("value", current_selection_name);
+    tree.selection_label (selection_set[id]);
+}
+
+function selection_handler_name_box (e) {
+    var name_box = d3.select (this);
+     switch (e.detail[0]) {
+        case 'save':
+        case 'cancel':
+            name_box.attr ("disabled", true)
+                    .style ("color",  color_scheme(current_selection_id));
+            break;
+        case 'new':
+            name_box
+              .property ("value", "new_selection_name")
+              .style ("color",  color_scheme(selection_set.length));
+            name_box[0][0].disabled = null;
+            break;
+        case 'rename':
+           name_box[0][0].disabled = null;
+           break;
+    }
+}
+function selection_handler_new (e) {
+  debugger;
+    var element = d3.select (this);
+    $(this).data('tooltip', false);
+    switch (e.detail[0]) {
+        case 'save':
+        case 'cancel':
+            if (selection_set.length == max_selections) {
+                element.classed ("disabled", true);
+                    $(this).tooltip ({'title' : 'Up to ' + max_selections + ' are allowed', 'placement' : 'left'});
+            } else {
+                element.classed ("disabled", null);
+            }
+            break;
+        default:
+            element.classed ("disabled", true);
+            break;
+    }
+}
+function selection_handler_rename (e) {
+    var element = d3.select (this);
+    element.classed ("disabled", (e.detail[0] == "save" || e.detail[0] == "cancel") ? null : true);
+}
+function selection_handler_save_selection_name (e) {
+    var element = d3.select (this);
+    element.style ("display", (e.detail[0] == "save" || e.detail[0] == "cancel") ? "none" : null);
+}
+function selection_handler_name_dropdown (e) {
+    var element = d3.select (this).selectAll (".selection_set");
+    element.classed ("disabled", (e.detail[0] == "save" || e.detail[0] == "cancel") ? null : true);
+}
+function selection_handler_delete (e) {
+    var element = d3.select (this);
+    $(this).tooltip('destroy');
+    switch (e.detail[0]) {
+        case 'save':
+        case 'cancel':
+            if (selection_set.length == 1) {
+                element.classed ("disabled", true);
+                    $(this).tooltip ({'title' : 'At least one named selection set <br> is required;<br>it can be empty, however', 'placement' : 'bottom', 'html': true});
+            } else {
+                element.classed ("disabled", null);
+            }
+            break;
+        default:
+            element.classed ("disabled", true);
+            break;
+    }}
+
+
 HTMLWidgets.widget({
 
   name: 'treewidget',
@@ -7,10 +109,10 @@ HTMLWidgets.widget({
   initialize: function(el, width, height) {
     
     /* Set up toolbar */
-    this.toolbar_setup(el);
+    //this.toolbar_setup(el);
     
     /* Add selection widget */
-    this.selection_menu_setup(el);
+    //this.selection_menu_setup(el);
     
     /* Some global variables */
     selection_set = ['Foreground'];
@@ -26,20 +128,29 @@ HTMLWidgets.widget({
      .attr("height",height);
     
     /* Make tree global */ 
-    tree=d3.layout.phylotree(el).size ([height, width]).separation (function (a,b) {return 0;});
+    tree=d3.layout.phylotree(el)
+      .size ([height, width])
+      .separation (function (a,b) {return 0;})
+      .count_handler (function (count) {
+              $("#selected_branch_counter").text (function (d) {return count[current_selection_name];});
+              $("#selected_filtered_counter").text (count.tag);
+          }
+      );      
     
     this.default_tree_settings(tree);
     
     /* Add event listeners */
-    $("#selection_new").get(0).addEventListener(selection_menu_element_action,this.selection_handler_new,false);
-    $("#selection_rename").get(0).addEventListener(selection_menu_element_action,this.selection_handler_rename,false);
-    $("#selection_delete").get(0).addEventListener(selection_menu_element_action,this.selection_handler_delete,false);
+    
+    $("#selection_new").get(0).addEventListener(selection_menu_element_action,selection_handler_new,false);
+    $("#selection_rename").get(0).addEventListener(selection_menu_element_action,selection_handler_rename,false);
+    $("#selection_delete").get(0).addEventListener(selection_menu_element_action,selection_handler_delete,false);
     $("#selection_delete").get(0).dispatchEvent (new CustomEvent (selection_menu_element_action,{'detail' : ['cancel', null]}));
-    $("#selection_name_box").get(0).addEventListener(selection_menu_element_action,this.selection_handler_name_box,false);
-    $("#save_selection_name").get(0).addEventListener(selection_menu_element_action,this.selection_handler_save_selection_name,false);
-    $("#selection_name_dropdown").get(0).addEventListener(selection_menu_element_action,this.selection_handler_name_dropdown,false);
-    this.update_selection_names();
-
+    $("#selection_name_box").get(0).addEventListener(selection_menu_element_action,selection_handler_name_box,false);
+    $("#save_selection_name").get(0).addEventListener(selection_menu_element_action,selection_handler_save_selection_name,false);
+    $("#selection_name_dropdown").get(0).addEventListener(selection_menu_element_action,selection_handler_name_dropdown,false);
+    
+    update_selection_names();
+    
     return {"svg": svg, "tree": tree};
   },
 
@@ -53,11 +164,11 @@ HTMLWidgets.widget({
     /* Add tools */
     
     $("#expand_spacing").on ("click", function (e) {
-    tree.spacing_x (tree.spacing_x() + 1).update(true);
+      tree.spacing_x (tree.spacing_x() + 1).update(true);
     });
     
     $("#compress_spacing").on ("click", function (e) {
-    tree.spacing_x (tree.spacing_x() - 1).update(true);
+      tree.spacing_x (tree.spacing_x() - 1).update(true);
     });
 
     function sort_nodes (asc) {
@@ -176,98 +287,83 @@ HTMLWidgets.widget({
       var filter_value = $(this).val();
       var rx = new RegExp (filter_value,"i");
       tree.modify_selection (function (n) {
-    return filter_value.length && (tree.branch_name () (n.target).search (rx)) != -1;
+        return filter_value.length && (tree.branch_name () (n.target).search (rx)) != -1;
       },"tag");
-
+    })
     // Need to tidy below
 
     var valid_id = new RegExp ("^[\\w]+$");
 
-$("#selection_name_box").on ("input propertychange", function (e) {
-   var name = $(this).val();
-
-   var accept_name = (selection_set.indexOf (name) < 0) &&
-                     valid_id.exec (name) ;
-
-   d3.select ("#save_selection_button").classed ("disabled", accept_name ? null : true );
-});
-
-$("#selection_rename > a").on ("click", function (e) {
-
-    d3.select ("#save_selection_button")
-           .classed ("disabled",true)
-           .on ("click", function (e) { // save selection handler
-                var old_selection_name = current_selection_name;
-                selection_set[current_selection_id] = current_selection_name = $("#selection_name_box").val();
-
-                if (old_selection_name != current_selection_name) {
-                    tree.update_key_name (old_selection_name, current_selection_name);
-                    this.update_selection_names (current_selection_id);
-                }
-                send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
-                             {'detail' : ['save', this]}));
-           });
-
-    d3.select ("#cancel_selection_button")
-               .classed ("disabled",false)
-               .on ("click", function (e) { // save selection handler
-                    $("#selection_name_box").val(current_selection_name);
-                    send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
-                                 {'detail' : ['cancel', this]}));
-              });
-
-    send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
-                                 {'detail' : ['rename', this]}));
-    e.preventDefault    ();
-});
-
-$("#selection_delete > a").on ("click", function (e) {
-
-    tree.update_key_name (selection_set[current_selection_id], null)
-    selection_set.splice (current_selection_id, 1);
-
-    if (current_selection_id > 0) {
-        current_selection_id --;
-    }
-    current_selection_name = selection_set[current_selection_id];
-    this.update_selection_names (current_selection_id)
-    $("#selection_name_box").val(current_selection_name)
-
-
-    send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
-                                 {'detail' : ['save', this]}));
-    e.preventDefault    ();
-
-});
-
-$("#selection_new > a").on ("click", function (e) {
-
-    d3.select ("#save_selection_button")
-               .classed ("disabled",true)
-               .on ("click", function (e) { // save selection handler
-                    current_selection_name = $("#selection_name_box").val();
-                    current_selection_id = selection_set.length;
-                    selection_set.push (current_selection_name);
-                    this.update_selection_names (current_selection_id);
-                    send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
-                                 {'detail' : ['save', this]}));
-              });
-
-     d3.select ("#cancel_selection_button")
-               .classed ("disabled",false)
-               .on ("click", function (e) { // save selection handler
-                    $("#selection_name_box").val(current_selection_name);
-                    send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
-                                 {'detail' : ['cancel', this]}));
-              });
-
-      this.send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,{'detail' : ['new', this]}));
+  $("#selection_name_box").on ("input propertychange", function (e) {
+     var name = $(this).val();
+     var accept_name = (selection_set.indexOf (name) < 0) &&
+                       valid_id.exec (name) ;
+     d3.select ("#save_selection_button").classed ("disabled", accept_name ? null : true );
+  });
+  $("#selection_rename > a").on ("click", function (e) {
+      d3.select ("#save_selection_button")
+             .classed ("disabled",true)
+             .on ("click", function (e) { // save selection handler
+                  var old_selection_name = current_selection_name;
+                  selection_set[current_selection_id] = current_selection_name = $("#selection_name_box").val();
+                  if (old_selection_name != current_selection_name) {
+                      tree.update_key_name (old_selection_name, current_selection_name);
+                      update_selection_names (current_selection_id);
+                  }
+                  send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                               {'detail' : ['save', this]}));
+             });
+      d3.select ("#cancel_selection_button")
+                 .classed ("disabled",false)
+                 .on ("click", function (e) { // save selection handler
+                      $("#selection_name_box").val(current_selection_name);
+                      send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                   {'detail' : ['cancel', this]}));
+                });
+      send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                   {'detail' : ['rename', this]}));
       e.preventDefault    ();
-    });
-
-    // Need to tidy above
-
-    });
+  });
+  $("#selection_delete > a").on ("click", function (e) {
+      tree.update_key_name (selection_set[current_selection_id], null)
+      selection_set.splice (current_selection_id, 1);
+      if (current_selection_id > 0) {
+          current_selection_id --;
+      }
+      current_selection_name = selection_set[current_selection_id];
+      update_selection_names (current_selection_id)
+      $("#selection_name_box").val(current_selection_name)
+      send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                   {'detail' : ['save', this]}));
+      e.preventDefault    ();
+  });
+  
+  $("#selection_new > a").on ("click", function (e) {
+  
+      d3.select ("#save_selection_button")
+                 .classed ("disabled",true)
+                 .on ("click", function (e) { // save selection handler
+                      current_selection_name = $("#selection_name_box").val();
+                      current_selection_id = selection_set.length;
+                      selection_set.push (current_selection_name);
+                      update_selection_names (current_selection_id);
+                      send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                   {'detail' : ['save', this]}));
+                });
+  
+       d3.select ("#cancel_selection_button")
+                 .classed ("disabled",false)
+                 .on ("click", function (e) { // save selection handler
+                      $("#selection_name_box").val(current_selection_name);
+                      send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                   {'detail' : ['cancel', this]}));
+                });
+  
+  
+     send_click_event_to_menu_objects (new CustomEvent (selection_menu_element_action,
+                                 {'detail' : ['new', this]}));
+    e.preventDefault    ();
+});
     
     /* Dynamic resize */
     this.makeResponsive(el);
@@ -291,227 +387,6 @@ $("#selection_new > a").on ("click", function (e) {
       svg.style.width = "100%";
       svg.style.height = "100%";
      }
-  },
-  
-  toolbar_setup: function(el){
-    var toolbar=d3.select(el).append("div")
-      .attr("class","btn-toolbar");
-    
-    var btngroup=toolbar.append("div")
-      .attr("class","btn-group");
-      
-    var expandbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","expand_spacing")
-      .attr("text","Expand spacing")
-      .append("i")
-      .attr("class","fa fa-expand");
-      
-    var compressbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","compress_spacing")
-      .attr("text","Compress spacing")
-      .append("i")
-      .attr("class","fa fa-compress");
-      
-     var sortascbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","sort_ascending")
-      .attr("text","Sort deepest clades to the bottom")
-      .append("i")
-      .attr("class","fa fa-sort-amount-asc");
-      
-    var sortdescbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","sort_descending")
-      .attr("text","Sort deepest clades to the top")
-      .append("i")
-      .attr("class","fa fa-sort-amount-desc");
-      
-    var sortorigbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","sort_original")
-      .attr("text","Restore original order")
-      .append("i")
-      .attr("class","fa fa-sort");
-
-    var savebutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","save_tree")
-      .attr("text","Save tree")
-      .append("i")
-      .attr("class","fa fa-floppy-o");
-
-    var exitbutton=btngroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default btn-sm")
-      .attr("id","exit_widget")
-      .attr("text","Exit")
-      .append("i")
-      .attr("class","fa fa-close");
- 
-  },
-  
-  selection_menu_setup: function(el){
-    var inputgroupcontainer=d3.select(el).append("div")
-      .attr("class","input-group");
-    
-    var inputgroup=inputgroupcontainer.append("span")
-      .attr("class","input-group-btn");
-      
-    var inputmenubutton=inputgroup.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default dropdown-toggle")
-      .attr("data-toggle","dropdown")
-      .text("Tag ")
-      .append("span")
-      .attr("class","caret");
-    
-    var inputmenu=inputgroup.append("ul")
-      .attr("class","dropdown-menu")
-      .attr("id","selection_name_dropdown");
-
-    var selectionnewbutton=inputmenu.append("li")
-      .attr("id","selection_new")
-      .append("a")
-      .attr("href","#")
-      .text("New selection set");
-      
-    var selectiondelbutton=inputmenu.append("li")
-      .attr("id","selection_delete")
-      //.attr("class","disabled")
-      .append("a")
-      .attr("href","#")
-      .text("Delete selection set");
-    
-    var selectionrenamebutton=inputmenu.append("li")
-      .attr("id","selection_rename")
-      .append("a")
-      .attr("href","#")
-      .text("Rename selection set");
-      
-    var selectionrenamebutton=inputmenu.append("li")
-      .attr("class","divider");
-    
-    var selectionnamebox=inputgroupcontainer.append("input")
-      .attr("type","text")
-      .attr("class","form-control")
-      .attr("value","Foreground")
-      .attr("id","selection_name_box")
-      .attr("disabled","true");
-      
-    var saveselectionspan=inputgroupcontainer.append("span")
-      .attr("class","input-group-btn")
-      .attr("id","save_selection_name")
-      .attr("style","display: none");
-      
-    saveselectionspan.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default")
-      .attr("id","cancel_selection_button")
-      .text("Cancel")
-      
-    saveselectionspan.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default")
-      .attr("id","save_selection_button")
-      .text("Save")
-    
-    var selectionmenu=inputgroupcontainer.append("span")
-      .attr("class","input-group-brn");
-      
-    selectionmenu.append("button")
-      .attr("type","button")
-      .attr("class","btn btn-default dropdown-toggle")
-      .attr("data-toggle","dropdown")
-      .text("Selection ")
-      .append("span")
-      .attr("class","caret");
-      
-    var selectionmenuitems=selectionmenu.append("ul")
-      .attr("class","dropdown-menu");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","filter_add")
-      .text("Add filtered nodes to selection");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","filter_remove")
-      .text("Remove filtered nodes to selection");
-
-    selectionmenuitems.append("li")
-      .attr("class","divider");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","select_all_internal")
-      .text("Select all internal nodes");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","select_all_leaves")
-      .text("Select all leaf nodes");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","clear_internal")
-      .text("Clear all internal nodes");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","clear_leaves")
-      .text("Clear all leaves");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","select_none")
-      .text("Clear selection");
-
-    selectionmenuitems.append("li")
-      .attr("class","divider");
-
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","mp_label")
-      .text("Label internal nodes using maximum parsimony");
-      
-    selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","and_label")
-      .text("Label internal nodes using conjunction (AND)");
-   
-     selectionmenuitems.append("li")
-      .append("a")
-      .attr("href","#")
-      .attr("id","or_label")
-      .text("Label internal nodes using disjunction (OR)");
-      
-     /* Filtering */
-    
-    var branchfilter=inputgroupcontainer.append("div")
-      .attr("class","form-group navbar-form navbar-right")
-      .append("input")
-      .attr("type","text")
-      .attr("id","branch_filter")
-      .attr("class","form-control")
-      .attr("placeholder","Filter branches on");
   },
   
   node_colorizer: function(element, data) {
@@ -567,68 +442,6 @@ $("#selection_new > a").on ("click", function (e) {
             }
        );
       return tagged_tree;
-    },
-
-    send_click_event_to_menu_objects: function(e) {
-    $("#selection_new, #selection_delete, #selection_rename, #save_selection_name, #selection_name_box, #selection_name_dropdown").get().forEach (
-        function (d) {
-            d.dispatchEvent (e);
-        }
-    );
-    },
-  
-    update_selection_names: function(id, skip_rebuild) {
-
-      skip_rebuild = skip_rebuild || false;
-      id = id || 0;
-
-
-      current_selection_name = selection_set[id];
-      current_selection_id = id;
-
-      if (!skip_rebuild) {
-        d3.selectAll (".selection_set").remove();
-
-        d3.select ("#selection_name_dropdown")
-          .selectAll (".selection_set")
-          .data (selection_set)
-          .enter()
-          .append ("li")
-          .attr ("class", "selection_set")
-          .append ("a")
-          .attr ("href", "#")
-          .text (function (d) { return d;})
-          .style ("color", function (d,i) {return color_scheme(i);})
-          .on ("click", function (d,i) {update_selection_names (i,true);});
-
-      }
-
-
-      d3.select ("#selection_name_box")
-        .style ("color",  color_scheme(id))
-        .property ("value", current_selection_name);
-
-      tree.selection_label (selection_set[id]);
-    },
-
-    selection_handler_new: function(e) {
-    var element = d3.select (this);
-    $(this).data('tooltip', false);
-    switch (e.detail[0]) {
-        case 'save':
-        case 'cancel':
-            if (selection_set.length == max_selections) {
-                element.classed ("disabled", true);
-                    $(this).tooltip ({'title' : 'Up to ' + max_selections + ' are allowed', 'placement' : 'left'});
-            } else {
-                element.classed ("disabled", null);
-            }
-            break;
-        default:
-            element.classed ("disabled", true);
-            break;
-
-      }
     }
 
 });
