@@ -46,7 +46,7 @@ treewidget <- function(nwk, width = NULL, height = NULL) {
     x,
     width = width,
     height = height,
-    sizingPolicy = htmlwidgets::sizingPolicy(viewer.suppress = TRUE,
+    sizingPolicy = htmlwidgets::sizingPolicy(viewer.suppress = FALSE,
                                              browser.fill = TRUE,
                                              browser.padding = 0),
     package = 'epiwidgets'
