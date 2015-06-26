@@ -43,8 +43,3 @@ z <- c(1, 2, 3, 4, 5)
 matrixcube(x,y,z,axis.labels=c("Ego","Alter","Onset"),tick.labels=list(nodes,nodes,sort(unique(z))))
 ```
 
-## odewidget
-
-```{r}
-odewidget()
-```

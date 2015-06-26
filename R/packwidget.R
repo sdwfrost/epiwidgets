@@ -5,7 +5,7 @@
 #' @import htmlwidgets
 #'
 #' @export
-packwidget <- function(radius, cluster, width = NULL, height = NULL) {
+packwidget <- function(radius, cluster, width = NULL, height = NULL, browser = FALSE) {
 
   # forward options using x
   x = data.frame(
@@ -18,6 +18,9 @@ packwidget <- function(radius, cluster, width = NULL, height = NULL) {
     x,
     width = width,
     height = height,
+    sizingPolicy = htmlwidgets::sizingPolicy(viewer.suppress = browser,
+                                             browser.fill = TRUE,
+                                             browser.padding = 0)
     package = 'epiwidgets'
   )
 }

@@ -15,7 +15,8 @@ matrixcube <- function(
   flip.time = FALSE,
   grid = TRUE,
   renderer = c("auto","canvas","webgl", "webgl-buffered"),
-  pch)
+  pch,
+  browser=FALSE)
 {
   # validate input
   if(!missing(y) && !missing(z)) x = cbind(x=x,y=y,z=z)
@@ -95,7 +96,7 @@ matrixcube <- function(
       x = list(data=x, options=options, pch=pch),
                width = width,
                height = height,
-               htmlwidgets::sizingPolicy(padding = 0, browser.fill = TRUE),
+               htmlwidgets::sizingPolicy(viewer.suppress=browser,padding = 0, browser.fill = TRUE),
                package = "epiwidgets")
 }
 

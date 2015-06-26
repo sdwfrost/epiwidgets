@@ -23,7 +23,7 @@
 #' 
 #' @import htmlwidgets
 #' @export
-treewidget <- function(nwk, width = NULL, height = NULL) {
+treewidget <- function(nwk, width = NULL, height = NULL, browser = FALSE) {
 
   # try to convert if not character (assuming not Newick)
   if(class(nwk) %in% c("phylo","multiPhylo")){
@@ -46,7 +46,7 @@ treewidget <- function(nwk, width = NULL, height = NULL) {
     x,
     width = width,
     height = height,
-    sizingPolicy = htmlwidgets::sizingPolicy(viewer.suppress = FALSE,
+    sizingPolicy = htmlwidgets::sizingPolicy(viewer.suppress = browser,
                                              browser.fill = TRUE,
                                              browser.padding = 0),
     package = 'epiwidgets'
