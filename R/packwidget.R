@@ -20,7 +20,7 @@ packwidget <- function(radius, cluster, width = NULL, height = NULL, browser = F
     height = height,
     sizingPolicy = htmlwidgets::sizingPolicy(viewer.suppress = browser,
                                              browser.fill = TRUE,
-                                             browser.padding = 0)
+                                             browser.padding = 0),
     package = 'epiwidgets'
   )
 }
