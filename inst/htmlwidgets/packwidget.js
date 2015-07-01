@@ -90,7 +90,7 @@ HTMLWidgets.widget({
 	 };
 	
 	 var ggcolor = function(i,n){
-		 var hues = range(15,375,360/(n-1));
+		 var hues = range(15,375,360/n);
 		 var hcl = hues.map(function(h){
 			 return d3.hcl(h,100,65);
 		 });
