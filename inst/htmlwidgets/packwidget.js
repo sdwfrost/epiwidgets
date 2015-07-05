@@ -30,8 +30,8 @@ HTMLWidgets.widget({
     var xnode=HTMLWidgets.dataframeToD3(x.properties);
 
     var padding = 1.5, // separation between same-color nodes
-    var clusterPadding = 6, // separation between different-color nodes
-    var maxRadius = 12;
+        clusterPadding = 6, // separation between different-color nodes
+        maxRadius = 12;
 
     var n = xnode.length; 
     var m = 1;
