@@ -1,15 +1,19 @@
-#' <Add Title>
+#' packwidget
 #'
-#' <Add Description>
+#' A widget for packed circles
 #'
 #' @import htmlwidgets
 #'
 #' @export
-packwidget <- function(radius, cluster, width = NULL, height = NULL, browser = FALSE) {
+packwidget <- function(radius, cluster, col = NULL, width = NULL, height = NULL, browser = FALSE) {
 
+  if(is.null(col)){
+      hues <- seq(15,375,length=max(cluster)+1)
+      col <- hcl(h=hues,l=65,c=100)[1:max(cluster)]
+  }
   # forward options using x
-  x = data.frame(
-    radius=radius, cluster=cluster
+  x = list(
+    properties = data.frame(radius=radius, cluster=cluster), col=col
   )
 
   # create widget
