@@ -13,7 +13,7 @@ packwidget <- function(radius, cluster, col = NULL, width = NULL, height = NULL,
   }
   # forward options using x
   x = list(
-    properties = data.frame(radius=radius, cluster=cluster), col=col
+    properties = data.frame(radius=radius, cluster=cluster-1), col=col
   )
 
   # create widget
