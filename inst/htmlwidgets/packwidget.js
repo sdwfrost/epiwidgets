@@ -27,6 +27,7 @@ HTMLWidgets.widget({
     var width=instance.width;
     var height=instance.height;
     
+    xx = x;
     var xnode=HTMLWidgets.dataframeToD3(x.properties);
 
     var padding = 1.5, // separation between same-color nodes
@@ -66,11 +67,11 @@ HTMLWidgets.widget({
      .charge(0)
      .on("tick", tick)
      .start();
-     
+    
     var node = svg.selectAll("circle")
      .data(nodes)
      .enter().append("circle")
-     .style("fill", function(d) { return x.cols[d.cluster]; })
+     .style("fill", function(d) { console.log(d.cluster);return xx.col[d.cluster]; })
      .call(force.drag);
     
     node.transition()
